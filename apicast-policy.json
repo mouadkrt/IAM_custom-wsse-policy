@@ -1,0 +1,20 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "add wsse soap header",
+  "summary": "",
+  "description": "Munisys custom policy for dynamicaly inserting a wsse SOAP header with 3scale",
+  "version": "1",
+  "configuration": {
+    "type": "object",
+    "properties": {
+        "wsseUsername": {
+          "description": "Please provide username for the Web Service Security SOAP Header",
+          "type": "string"
+        },
+        "wssePassword": {
+          "description": "Please provide password for the Web Service Security SOAP Header",
+          "type": "string"
+        }
+    }
+  }
+}
