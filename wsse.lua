@@ -5,13 +5,13 @@ local mt = { __index = _M }
 
 
 function _M.new(config)
-	-- file = io.open("/tmp/config.out", "a")
-	-- io.output(file)
-	-- io.write(tostring(config.wsseUsername))
-	-- io.close(file)
-		
-	wsseUsername = config.wsseUsername
-	wssePassword = config.wssePassword
+        file = io.open("/tmp/config.out", "a")
+        io.output(file)
+        io.write(tostring(config.wsseUsername))
+        io.close(file)
+
+        wsseUsername = config.wsseUsername
+        wssePassword = config.wssePassword
    return setmetatable({}, mt)
 end
 
@@ -44,8 +44,12 @@ function _M:rewrite()
                 <soapenv:Header>
                         <wsse:Security soapenv:mustUnderstand="1" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
                                 <wsse:UsernameToken xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" wsu:Id="UsernameToken-z5ijcZEytMhncDVCTY6J7Q22" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
-                                        <wsse:Username>]]..wsseUsername..[[</wsse:Username>
-                                        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">]]..wssePassword..[[</wsse:Password>
+                                        <wsse:Username>
+                                ]] .. wsseUsername .. [[
+                                                                                </wsse:Username>
+                                        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">
+                                ]] .. wssePassword .. [[ 
+                                                                        </wsse:Password>
                                 </wsse:UsernameToken>
                         </wsse:Security>
                 </soapenv:Header>
@@ -59,10 +63,10 @@ function _M:rewrite()
         body = string.sub(body,0, pos-1) .. wsseSecurityHeader .. string.sub(body,pos)
 
         -- Write the content of the body to disk (Debug puprose)
-        -- file = io.open("/tmp/body_out.lua", "a")
-        -- io.output(file)
-        -- io.write(body)
-        -- io.close(file)
+        file = io.open("/tmp/body_out.lua", "a")
+        io.output(file)
+        io.write(body)
+        io.close(file)
 
         ngx.req.set_body_data(body)
 end
