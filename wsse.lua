@@ -75,8 +75,12 @@ function _M:rewrite()
         wsseSecurityHeader = [[
                         <wsse:Security soapenv:mustUnderstand="1" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
                                 <wsse:UsernameToken xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" wsu:Id="UsernameToken-z5ijcZEytMhncDVCTY6J7Q22" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
-                                        <wsse:Username>]]..wsseUsername..[[</wsse:Username>
-                                        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">]]..wssePassword..[[</wsse:Password>
+                                        <wsse:Username>
+                                ]] .. wsseUsername .. [[
+                                                                                </wsse:Username>
+                                        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">
+                                ]] .. wssePassword .. [[ 
+                                                                        </wsse:Password>
                                 </wsse:UsernameToken>
                         </wsse:Security>
         ]]
