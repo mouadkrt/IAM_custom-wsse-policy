@@ -75,12 +75,8 @@ function _M:rewrite()
         wsseSecurityHeader = [[
                         <wsse:Security soapenv:mustUnderstand="1" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
                                 <wsse:UsernameToken xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" wsu:Id="UsernameToken-z5ijcZEytMhncDVCTY6J7Q22" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
-                                        <wsse:Username>
-                                ]] .. wsseUsername .. [[
-                                                                                </wsse:Username>
-                                        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">
-                                ]] .. wssePassword .. [[ 
-                                                                        </wsse:Password>
+                                        <wsse:Username>]]..wsseUsername..[[</wsse:Username>
+                                        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">]]..wssePassword..[[</wsse:Password>
                                 </wsse:UsernameToken>
                         </wsse:Security>
         ]]
@@ -91,9 +87,8 @@ function _M:rewrite()
 		
 		-- Remove any existing soap header tag (and its content) :
 			soapXML = body
-			soapXmlLower = string.lower(body)
 			local tagName = "Header" --string.lower("Header") -- lowercase of the tag to be detected
-			local matchedTags = matchUnknownNamespaceTag(soapXmlLower, tagName)
+			local matchedTags = matchUnknownNamespaceTag(string.lower(body), string.lower(tagName))
 			 
 			-- Print matched tags with their types
 			if next(matchedTags) then
@@ -113,22 +108,30 @@ function _M:rewrite()
 				newBody = replaceBetween(soapXML, pos1, pos2 , "")
 			else
 				print("Tag " .. tagName .. " not found")
+				newBody = body
 			end
 			 
 		-- Now insert the new Header (buit from the policy parameters) after the body tag :
-			NewWsseSecurityHeader=" <" .. headerNS .. ":Header>" .. wsseSecurityHeader .. "</" .. headerNS .. ":Header> "
-			local matchedTags = matchUnknownNamespaceTag(newBody, "body")
+			
+			local matchedTags = matchUnknownNamespaceTag(string.lower(newBody), "body")
 			if next(matchedTags) then
 				for _, tagInfo in ipairs(matchedTags) do
 					if tagInfo.slash == "" then
 						pos = tagInfo.startPos-1
+						if headerNS == nil or headerNS == "" then
+							headerNS = tagInfo.ns
+						end
+						NewWsseSecurityHeader=" <" .. headerNS .. ":Header>" .. wsseSecurityHeader .. "</" .. headerNS .. ":Header> "
 						newBody = string.sub(newBody,0, pos) ..  NewWsseSecurityHeader ..  string.sub(newBody,pos+1)
 						break
 					end
 				end
 			end
 			 
-
+		-- Update Namespace Prefix
+		newBody = newBody:gsub("<soap:", "<soapenv:")
+        newBody = newBody:gsub("</soap:", "</soapenv:") 
+		newBody = newBody:gsub("xmlns:soap=", "xmlns:soapenv=")
         -- Write the content of the body to disk (Debug puprose)
         file = io.open("/tmp/body_out.lua", "a")
         io.output(file)
