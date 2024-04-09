@@ -12,7 +12,7 @@ function _M.new(config)
 
         wsseUsername = config.wsseUsername
         wssePassword = config.wssePassword
-		ngx.log(ngx.INFO, "wsse username : " .. wsseUsername .. ", wsse password : " .. wssePassword)
+		ngx.log(ngx.INFO, "Configured WSSE credentials : wsse username = " .. wsseUsername .. ", wsse password = " .. wssePassword)
    return setmetatable({}, mt)
 end
 
