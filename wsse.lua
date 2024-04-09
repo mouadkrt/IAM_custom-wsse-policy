@@ -46,9 +46,10 @@ function matchUnknownNamespaceTag(xmlString, tagName)
     local matches = {}
     local startPos, endPos = 1, 1
     for slash, foundTag in xmlString:gmatch(pattern) do
-		muis_log("foundTag : " .. foundTag)
+		ngx.log(ngx.DEBUG, "foundTag : " .. foundTag)
+		
         local pureTag = foundTag:gsub("(%s+).+", ""):gsub("[^:]+:", "") -- remove any trainling spaces , Removing namespace prefix
-		-- muis_log(pureTag .. "|" .. tagName .. "|")
+		-- ngx.log(ngx.DEBUG, pureTag .. "|" .. tagName .. "|")
         if pureTag == tagName then
              --_, _, ns = foundTag:find("^(.-):") -- store namespace value for later use
               _, _, ns = foundTag:find("^(.-)(:?)" .. tagName) -- store namespace value for later use
@@ -56,9 +57,9 @@ function matchUnknownNamespaceTag(xmlString, tagName)
            -- slah is either empty for  "opening" tags or ="/" for  "closing" tags
            
             local tagStart, tagEnd = xmlString:find(slash .. foundTag, startPos, true)
-			--muis_log(tagStart .. "|" .. tagEnd .. "|")
+			--ngx.log(ngx.DEBUG, tagStart .. "|" .. tagEnd .. "|")
             if tagStart and tagEnd then
-			--muis_log("Adding new tag information : tag = " .. foundTag .. ", slash = " .. slash .. ", startPos = " .. (tagStart -1) .. ", endPos = " .. (tagEnd + 1) .. ", ns = " .. ns)
+			--ngx.log(ngx.DEBUG, "Adding new tag information : tag = " .. foundTag .. ", slash = " .. slash .. ", startPos = " .. (tagStart -1) .. ", endPos = " .. (tagEnd + 1) .. ", ns = " .. ns)
                 table.insert(matches, {
                     tag = foundTag,
                     slash = slash,
@@ -69,7 +70,7 @@ function matchUnknownNamespaceTag(xmlString, tagName)
             end
         end
     end
-	muis_log("matchUnknownNamespaceTag(..., " .. tagName .. ") : Number of matched tags (openning and closing) :" .. #matches)
+	ngx.log(ngx.DEBUG, "matchUnknownNamespaceTag(..., " .. tagName .. ") : Number of matched tags (openning and closing) :" .. #matches)
     return matches
 end
  
@@ -77,14 +78,6 @@ function replaceBetween(originalString, startPos, endPos, replacement)
     local prefix = string.sub(originalString, 1, startPos - 1)  -- Extract the substring before startPos
     local suffix = string.sub(originalString, endPos + 1)       -- Extract the substring after endPos
     return prefix .. replacement .. suffix                       -- Concatenate the parts with replacement
-end
-
-function muis_log(text)
-	-- file = io.open("/tmp/body_out.lua", "a")
-    -- io.output(file)
-    -- io.write("\n\n" .. text)
-    -- io.close(file)
-	ngx.log(ngx.INFO, text)
 end
 
 function _M:rewrite()
@@ -100,12 +93,12 @@ function _M:rewrite()
 		-- Load http body into memory
 			ngx.req.read_body()
 			body = ngx.req.get_body_data()
-			muis_log("New original body received : \n" .. body)
+			ngx.log(ngx.DEBUG, "New original body received : " .. body)
 			
-			muis_log("Removing any self-closed soap header tag ... ")
+			ngx.log(ngx.DEBUG, "Removing any self-closed soap header tag ... ")
 			body = body:gsub("<[Hh][Ee][Aa][Dd][Ee][Rr](%s*)/>", "")
 		
-			muis_log("Removing any existing soap header tag (and its content) ... ")
+			ngx.log(ngx.DEBUG, "Removing any existing soap header tag (and its content) ... ")
 			soapXML = body
 			
 			local matchedTags = matchUnknownNamespaceTag(string.lower(body), "header")
@@ -125,26 +118,26 @@ function _M:rewrite()
 				end
 				-- print(pos1 .. " - " .. pos2)
 				newBody = replaceBetween(soapXML, pos1, pos2 , "")
-				muis_log("Detected existing soap header. New body after removal of the header : \n" .. newBody)
+				ngx.log(ngx.DEBUG, "Detected existing soap header. New body after removal of the header : " .. newBody)
 			else
 				print("Tag header not found")
 				newBody = body
-				muis_log("Tag header not found")
+				ngx.log(ngx.DEBUG, "Tag header not found")
 			end
 			 
 		-- Now insert the new Header (buit from the policy parameters) after the body tag :
-			muis_log("Inserting the new Header (built from the policy parameters) after the body tag \n")
+			ngx.log(ngx.DEBUG, "Inserting the new Header (built from the policy parameters) after the body tag")
 			local matchedTags = matchUnknownNamespaceTag(string.lower(newBody), "body")
 			if next(matchedTags) then
 				for _, tagInfo in ipairs(matchedTags) do
-					muis_log(tagInfo.startPos .. "|" .. tagInfo.slash .. "|" .. tagInfo.ns)
+					ngx.log(ngx.DEBUG, tagInfo.startPos .. "|" .. tagInfo.slash .. "|" .. tagInfo.ns)
 					if tagInfo.slash == "" then
 						pos = tagInfo.startPos-1
 						globalNS  = tagInfo.ns -- We assume here that the namespace used in the body that is the same as the root Envelope one
-						muis_log("body namespace detected to be : " .. globalNS)
+						ngx.log(ngx.DEBUG, "body namespace detected to be : " .. globalNS)
 						
 						NewWsseSecurityHeader="<soapenv:Header>" .. wsseSecurityHeader .. "</soapenv:Header>"
-						--muis_log(NewWsseSecurityHeader)
+						--ngx.log(ngx.DEBUG, NewWsseSecurityHeader)
 						newBody = string.sub(newBody,0, pos) ..  NewWsseSecurityHeader ..  string.sub(newBody,pos+1)
 						break
 					end
@@ -160,7 +153,7 @@ function _M:rewrite()
 		newBody = newBody:gsub("<" .. globalNS .. "(:?)[Ee][Nn][Vv][Ee][Ll][Oo][Pp][Ee]", "<soapenv:Envelope")
 		newBody = newBody:gsub("</" .. globalNS .. "(:?)[Ee][Nn][Vv][Ee][Ll][Oo][Pp][Ee]", "</soapenv:Envelope")
     
-		muis_log("==> Final body set to : \n\n" .. newBody .. "\n")
+		ngx.log(ngx.DEBUG, "==> Final body set to : " .. newBody)
 
         ngx.req.set_body_data(newBody)
 end
