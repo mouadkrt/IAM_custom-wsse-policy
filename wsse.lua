@@ -45,19 +45,19 @@ function matchUnknownNamespaceTag(xmlString, tagName)
     local matches = {}
     local startPos, endPos = 1, 1
     for slash, foundTag in xmlString:gmatch(pattern) do
-                logToFile("foundTag : " .. foundTag)
+		logToFile("foundTag : " .. foundTag)
         local pureTag = foundTag:gsub("(%s+).+", ""):gsub("[^:]+:", "") -- remove any trainling spaces , Removing namespace prefix
-                -- logToFile(pureTag .. "|" .. tagName .. "|")
+		-- logToFile(pureTag .. "|" .. tagName .. "|")
         if pureTag == tagName then
              --_, _, ns = foundTag:find("^(.-):") -- store namespace value for later use
               _, _, ns = foundTag:find("^(.-)(:?)" .. tagName) -- store namespace value for later use
-                         if ns == nil then ns="" end
+			 if ns == nil then ns="" end
            -- slah is either empty for  "opening" tags or ="/" for  "closing" tags
            
             local tagStart, tagEnd = xmlString:find(slash .. foundTag, startPos, true)
-                        --logToFile(tagStart .. "|" .. tagEnd .. "|")
+			--logToFile(tagStart .. "|" .. tagEnd .. "|")
             if tagStart and tagEnd then
-                        --logToFile("Adding new tag information : tag = " .. foundTag .. ", slash = " .. slash .. ", startPos = " .. (tagStart -1) .. ", endPos = " .. (tagEnd + 1) .. ", ns = " .. ns)
+			--logToFile("Adding new tag information : tag = " .. foundTag .. ", slash = " .. slash .. ", startPos = " .. (tagStart -1) .. ", endPos = " .. (tagEnd + 1) .. ", ns = " .. ns)
                 table.insert(matches, {
                     tag = foundTag,
                     slash = slash,
@@ -68,7 +68,7 @@ function matchUnknownNamespaceTag(xmlString, tagName)
             end
         end
     end
-        logToFile("matchUnknownNamespaceTag(..., " .. tagName .. ") : Number of matched tags (openning and closing) :" .. #matches)
+	logToFile("matchUnknownNamespaceTag(..., " .. tagName .. ") : Number of matched tags (openning and closing) :" .. #matches)
     return matches
 end
  
@@ -95,70 +95,70 @@ function _M:rewrite()
                         </wsse:Security>
         ]]
 
-                -- Load http body into memory
-                        ngx.req.read_body()
-                        body = ngx.req.get_body_data()
-                        logToFile("New original body received : \n" .. body)
-
-                        logToFile("Removing any self-closed soap header tag ... ")
-                        body = body:gsub("<[Hh][Ee][Aa][Dd][Ee][Rr](%s*)/>", "")
-
-                        logToFile("Removing any existing soap header tag (and its content) ... ")
-                        soapXML = body
-
-                        local matchedTags = matchUnknownNamespaceTag(string.lower(body), "header")
-                         
-                        -- Print matched tags with their types
-                        if next(matchedTags) then
-                                for _, tagInfo in ipairs(matchedTags) do
-                                   --print("Tag:", tagInfo.slash .. tagInfo.tag)
-                                   --print("Start Position:", tagInfo.startPos)
-                                   --print("End Position:", tagInfo.endPos)
-                                  
-                                   if tagInfo.slash == "" then
-                                           pos1 = tagInfo.startPos
-                                        else
-                                           pos2 = tagInfo.endPos
-                                        end
-                                end
-                                -- print(pos1 .. " - " .. pos2)
-                                newBody = replaceBetween(soapXML, pos1, pos2 , "")
-                                logToFile("Detected existing soap header. New body after removal of the header : \n" .. newBody)
-                        else
-                                print("Tag header not found")
-                                newBody = body
-                                logToFile("Tag header not found")
-                        end
-                         
-                -- Now insert the new Header (buit from the policy parameters) after the body tag :
-                        logToFile("Inserting the new Header (built from the policy parameters) after the body tag \n")
-                        local matchedTags = matchUnknownNamespaceTag(string.lower(newBody), "body")
-                        if next(matchedTags) then
-                                for _, tagInfo in ipairs(matchedTags) do
-                                        logToFile(tagInfo.startPos .. "|" .. tagInfo.slash .. "|" .. tagInfo.ns)
-                                        if tagInfo.slash == "" then
-                                                pos = tagInfo.startPos-1
-                                                globalNS  = tagInfo.ns -- We assume here that the namespace used in the body that is the same as the root Envelope one
-                                                logToFile("body namespace detected to be : " .. globalNS)
-
-                                                NewWsseSecurityHeader="<soapenv:Header>" .. wsseSecurityHeader .. "</soapenv:Header>"
-                                                --logToFile(NewWsseSecurityHeader)
-                                                newBody = string.sub(newBody,0, pos) ..  NewWsseSecurityHeader ..  string.sub(newBody,pos+1)
-                                                break
-                                        end
-                                end
-                        end
-                         
-                -- Update Namespace Prefix (It seems that backend server always expect it to be explicitly "soapenv"
+		-- Load http body into memory
+			ngx.req.read_body()
+			body = ngx.req.get_body_data()
+			logToFile("New original body received : \n" .. body)
+			
+			logToFile("Removing any self-closed soap header tag ... ")
+			body = body:gsub("<[Hh][Ee][Aa][Dd][Ee][Rr](%s*)/>", "")
+		
+			logToFile("Removing any existing soap header tag (and its content) ... ")
+			soapXML = body
+			
+			local matchedTags = matchUnknownNamespaceTag(string.lower(body), "header")
+			 
+			-- Print matched tags with their types
+			if next(matchedTags) then
+				for _, tagInfo in ipairs(matchedTags) do
+				   --print("Tag:", tagInfo.slash .. tagInfo.tag)
+				   --print("Start Position:", tagInfo.startPos)
+				   --print("End Position:", tagInfo.endPos)
+				  
+				   if tagInfo.slash == "" then
+					   pos1 = tagInfo.startPos
+					else
+					   pos2 = tagInfo.endPos
+					end
+				end
+				-- print(pos1 .. " - " .. pos2)
+				newBody = replaceBetween(soapXML, pos1, pos2 , "")
+				logToFile("Detected existing soap header. New body after removal of the header : \n" .. newBody)
+			else
+				print("Tag header not found")
+				newBody = body
+				logToFile("Tag header not found")
+			end
+			 
+		-- Now insert the new Header (buit from the policy parameters) after the body tag :
+			logToFile("Inserting the new Header (built from the policy parameters) after the body tag \n")
+			local matchedTags = matchUnknownNamespaceTag(string.lower(newBody), "body")
+			if next(matchedTags) then
+				for _, tagInfo in ipairs(matchedTags) do
+					logToFile(tagInfo.startPos .. "|" .. tagInfo.slash .. "|" .. tagInfo.ns)
+					if tagInfo.slash == "" then
+						pos = tagInfo.startPos-1
+						globalNS  = tagInfo.ns -- We assume here that the namespace used in the body that is the same as the root Envelope one
+						logToFile("body namespace detected to be : " .. globalNS)
+						
+						NewWsseSecurityHeader="<soapenv:Header>" .. wsseSecurityHeader .. "</soapenv:Header>"
+						--logToFile(NewWsseSecurityHeader)
+						newBody = string.sub(newBody,0, pos) ..  NewWsseSecurityHeader ..  string.sub(newBody,pos+1)
+						break
+					end
+				end
+			end
+			 
+		-- Update Namespace Prefix (It seems that backend server always expect it to be explicitly "soapenv"
         newBody = newBody:gsub("[Ee][Nn][Vv][Ee][Ll][Oo][Pp][Ee] xmlns(:?)" .. globalNS .. "=", "Envelope xmlns:soapenv=")
-
-                newBody = newBody:gsub("<" .. globalNS .. "(:?)[Bb][Oo][Dd][Yy]", "<soapenv:Body")
-                newBody = newBody:gsub("</" .. globalNS .. "(:?)[Bb][Oo][Dd][Yy]", "</soapenv:Body")
-
-                newBody = newBody:gsub("<" .. globalNS .. "(:?)[Ee][Nn][Vv][Ee][Ll][Oo][Pp][Ee]", "<soapenv:Envelope")
-                newBody = newBody:gsub("</" .. globalNS .. "(:?)[Ee][Nn][Vv][Ee][Ll][Oo][Pp][Ee]", "</soapenv:Envelope")
+		
+		newBody = newBody:gsub("<" .. globalNS .. "(:?)[Bb][Oo][Dd][Yy]", "<soapenv:Body")
+		newBody = newBody:gsub("</" .. globalNS .. "(:?)[Bb][Oo][Dd][Yy]", "</soapenv:Body")
+		
+		newBody = newBody:gsub("<" .. globalNS .. "(:?)[Ee][Nn][Vv][Ee][Ll][Oo][Pp][Ee]", "<soapenv:Envelope")
+		newBody = newBody:gsub("</" .. globalNS .. "(:?)[Ee][Nn][Vv][Ee][Ll][Oo][Pp][Ee]", "</soapenv:Envelope")
     
-                logToFile("==> Final body set to : \n\n" .. newBody .. "\n")
+		logToFile("==> Final body set to : \n\n" .. newBody .. "\n")
 
         ngx.req.set_body_data(newBody)
 end
