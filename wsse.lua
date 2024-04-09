@@ -93,7 +93,7 @@ function _M:rewrite()
 		-- Load http body into memory
 			ngx.req.read_body()
 			body = ngx.req.get_body_data()
-			ngx.log(ngx.INFO, "New original body received : " .. body)
+			ngx.log(ngx.INFO, "New original body received : " .. string.gsub(body, "\n", ""))
 			
 			ngx.log(ngx.DEBUG, "Removing any self-closed soap header tag ... ")
 			body = body:gsub("<[Hh][Ee][Aa][Dd][Ee][Rr](%s*)/>", "")
@@ -153,7 +153,7 @@ function _M:rewrite()
 		newBody = newBody:gsub("<" .. globalNS .. "(:?)[Ee][Nn][Vv][Ee][Ll][Oo][Pp][Ee]", "<soapenv:Envelope")
 		newBody = newBody:gsub("</" .. globalNS .. "(:?)[Ee][Nn][Vv][Ee][Ll][Oo][Pp][Ee]", "</soapenv:Envelope")
     
-		ngx.log(ngx.INFO, "Request Payload : " .. newBody)
+		ngx.log(ngx.INFO, "Request Payload : " .. string.gsub(newBody, "\n", ""))
 
         ngx.req.set_body_data(newBody)
 end
