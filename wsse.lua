@@ -155,7 +155,7 @@ function _M:rewrite()
 		newBody = newBody:gsub("<" .. globalNS .. "(:?)[Ee][Nn][Vv][Ee][Ll][Oo][Pp][Ee]", "<soapenv:Envelope")
 		newBody = newBody:gsub("</" .. globalNS .. "(:?)[Ee][Nn][Vv][Ee][Ll][Oo][Pp][Ee]", "</soapenv:Envelope")
     
-		ngx.log(ngx.INFO, "New original body received : " .. newBody)
+		ngx.log(ngx.INFO, "New original body set to : " .. newBody)
 		-- ngx.log(ngx.INFO, "Request Payload : " .. string.gsub(newBody, "\n", ""))
 
         ngx.req.set_body_data(newBody)
