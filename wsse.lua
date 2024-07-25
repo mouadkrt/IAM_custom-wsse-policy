@@ -1,8 +1,10 @@
-local setmetatable = setmetatable
+-- local setmetatable = setmetatable
 
-local _M = require('apicast.policy').new('wsse', '0.1')
-local mt = { __index = _M }
+local policy = require('apicast.policy')
+local _M = policy.new('wsse', '0.1')
+--local mt = { __index = _M }
 
+local new = _M.new
 
 function _M.new(config)
         -- file = io.open("/tmp/config.out", "a")
@@ -10,34 +12,24 @@ function _M.new(config)
         -- io.write(tostring(config.wsseUsername))
         -- io.close(file)
 
-        wsseUsername = config.wsseUsername
-        wssePassword = config.wssePassword
-		ngx.log(ngx.INFO, "Configured WSSE credentials : wsse username = " .. wsseUsername .. ", wsse password = " .. wssePassword)
-   return setmetatable({}, mt)
-end
+        -- wsseUsername = config.wsseUsername
+        -- wssePassword = config.wssePassword
 
--- function _M.new(config)
---   local self = new(config)
---
---   if config then
---     self.wsse = {
---       wsseUsername = config.wsseUsername,
---       wssePassword = config.wssePassword,
---     }
---   else
---     self.wsse = {}
---   end
---
---   return self
---   -- return setmetatable({}, mt)
--- end
+		-- Patch 25/07/2024 for case 03879019
+			local self = new(config)
 
-function _M:init()
-  -- do work when nginx master process starts
-end
+			if config then
+				self.wsse = { 
+					wsseUsername = config.wsseUsername,
+					wssePassword = config.wssePassword
+				}
+				ngx.log(ngx.INFO, '_M.new(config) : self.wsse.wsseUsername = ' .. self.wsse.wsseUsername .. 'self.wsse.wssePassword = ' .. self.wsse.wssePassword)
+			else
+				self.wsse = nil
+				ngx.log(ngx.WARN, '_M.new(config) : config ~FALSE')
+			end
 
-function _M:init_worker()
-  -- do work when nginx worker process is forked from master
+			return self
 end
 
 function matchUnknownNamespaceTag(xmlString, tagName)
@@ -84,8 +76,8 @@ function _M:rewrite()
         wsseSecurityHeader = [[
                         <wsse:Security soapenv:mustUnderstand="1" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
                                 <wsse:UsernameToken wsu:Id="UsernameToken-z5ijcZEytMhncDVCTY6J7Q22" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
-                                        <wsse:Username>]]..wsseUsername..[[</wsse:Username>
-                                        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">]]..wssePassword..[[</wsse:Password>
+                                        <wsse:Username>]] .. self.wsse.wsseUsername .. [[</wsse:Username>
+                                        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">]] .. self.wsse.wssePassword .. [[</wsse:Password>
                                 </wsse:UsernameToken>
                         </wsse:Security>
         ]]
@@ -159,36 +151,6 @@ function _M:rewrite()
 		-- ngx.log(ngx.INFO, "Request Payload : " .. string.gsub(newBody, "\n", ""))
 
         ngx.req.set_body_data(newBody)
-end
-
-
-function _M:access()
-  -- ability to deny the request before it is sent upstream
-end
-
-function _M:content()
-  -- can create content instead of connecting to upstream
-end
-
-function _M:post_action()
-  -- do something after the response was sent to the client
-end
-
-function _M:header_filter()
-  -- can change response headers
-end
-
-function _M:body_filter()
-  -- can read and change response body
-  -- https://github.com/openresty/lua-nginx-module/blob/master/README.markdown#body_filter_by_lua
-end
-
-function _M:log()
-  -- can do extra logging
-end
-
-function _M:balancer()
-  -- use for example require('resty.balancer.round_robin').call to do load balancing
 end
 
 return _M
