@@ -1,2 +1,3 @@
 test_luasoap.lua
 test_luasoap2.lua
+patch_wsse

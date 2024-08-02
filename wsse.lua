@@ -90,7 +90,7 @@ function _M:rewrite()
 			-- ngx.log(ngx.INFO, "New original body received : " .. string.gsub(body, "\n", ""))
 			
 			ngx.log(ngx.DEBUG, "Removing any self-closed soap header tag ... ")
-			body = body:gsub("<[Hh][Ee][Aa][Dd][Ee][Rr](%s*)/>", "")
+			body = body:gsub("<[^:]*:?[Hh][Ee][Aa][Dd][Ee][Rr](%s*)/>", "")
 		
 			ngx.log(ngx.DEBUG, "Removing any existing soap header tag (and its content) ... ")
 			soapXML = body
